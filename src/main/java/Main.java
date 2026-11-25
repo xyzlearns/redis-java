@@ -1,4 +1,6 @@
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -7,34 +9,34 @@ public class Main {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     System.out.println("Logs from your program will appear here!");
 
-    //  Uncomment the code below to pass the first stage
         ServerSocket serverSocket = null;
-        Socket clientSocket = null;
         int port = 6379;
         try {
-            serverSocket = new ServerSocket(port);
-            // Since the tester restarts your program quite often, setting SO_REUSEADDR
-            // ensures that we don't run into 'Address already in use' errors
+            serverSocket = new ServerSocket();
             serverSocket.setReuseAddress(true);
-            // Wait for connection from client.
-            clientSocket = serverSocket.accept();
+            serverSocket.bind(new InetSocketAddress(port));
 
-            byte[] buffer = new byte[1024];
-            int read = clientSocket.getInputStream().read(buffer);
-            while(read != -1){
-                clientSocket.getOutputStream().write("+PONG\r\n".getBytes());
-                read = clientSocket.getInputStream().read(buffer);
+            while (true) {
+                Socket clientSocket = serverSocket.accept();
+                Thread thread =new Thread(()->handleMultipleClients(clientSocket));
+                thread.start();
             }
         } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
-        } finally {
-            try {
-                if (clientSocket != null) {
-                    clientSocket.close();
-                }
-            } catch (IOException e) {
-                System.out.println("IOException: " + e.getMessage());
+        }
+    }
+
+    private static void handleMultipleClients(Socket clientSocket){
+        try(Socket socket = clientSocket) {
+            byte[] buffer = new byte[1024];
+            int read = socket.getInputStream().read(buffer);
+            while (read != -1) {
+                socket.getOutputStream().write("+PONG\r\n".getBytes());
+                socket.getOutputStream().flush();
+                read = socket.getInputStream().read(buffer);
             }
+        } catch (IOException e){
+            System.out.println("IOException: " + e.getMessage());
         }
     }
 }

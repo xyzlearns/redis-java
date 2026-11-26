@@ -72,16 +72,17 @@ public class Main {
                         out.write("+OK\r\n".getBytes());
                     }else {
                         String expPrefix = commands.get(3).toLowerCase();
-                        int expiry = Integer.parseInt(commands.get(4));
+                        long expiry = Integer.parseInt(commands.get(4));
 
                         if (expPrefix.equals("px")){
-                            RedisEntry entry = new RedisEntry(value,expiry);
+                            long expiryTime = System.currentTimeMillis() + expiry;
+                            RedisEntry entry = new RedisEntry(value,expiryTime);
                             map.put(key,entry);
                             out.write("+OK\r\n".getBytes());
                         }
                         else if (expPrefix.equals("ex")){
-                            expiry *=1000;
-                            RedisEntry entry = new RedisEntry(value,expiry);
+                            long expiryTime = System.currentTimeMillis() + (expiry*1000);
+                            RedisEntry entry = new RedisEntry(value,expiryTime);
                             map.put(key,entry);
                             out.write("+OK\r\n".getBytes());
                         }
@@ -94,11 +95,11 @@ public class Main {
                     RedisEntry entry = map.get(key);
 
                     if (entry != null && !entry.isExpired()) {
-                        String val = "$" + entry.getValue().length() + "\r\n" + entry + "\r\n";
+                        String val = "$" + entry.getValue().length() + "\r\n" + entry.getValue() + "\r\n";
                         out.write(val.getBytes());
                     }
                     else if(entry != null && entry.isExpired()){
-                        map.remove(key);
+                        map.remove(key,entry);
                         out.write("$-1\r\n".getBytes());
                     }else {
                         out.write("$-1\r\n".getBytes());

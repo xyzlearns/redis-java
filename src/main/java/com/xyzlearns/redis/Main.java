@@ -32,39 +32,47 @@ public class Main {
         }
     }
 
-    private static void handleMultipleClients(Socket clientSocket){
-        try(Socket socket = clientSocket) {
+
+    private static void handleMultipleClients(Socket clientSocket) {
+        try (Socket socket = clientSocket) {
+
             InputStream in = socket.getInputStream();
             OutputStream out = socket.getOutputStream();
 
             RespParser parser = new RespParser();
 
-            List<String> commands = parser.respParser(in);
-            int i=0;
-            while(i< commands.size()){
+            List<String> commands;
 
-                String command = commands.get(i).toLowerCase();
+            while ((commands = parser.respParser(in)) != null) {
 
-                if(command.equals("ping")){
+                if (commands.isEmpty()) continue;
+
+                String command = commands.get(0).toLowerCase();
+
+                if (command.equals("ping")) {
+
                     out.write("+PONG\r\n".getBytes());
-                    out.flush();
+
                 } else if (command.equals("echo")) {
-                    i++;
-                    String msg = commands.get(i);
 
-                    msg = "$"+msg.length()+"\r\n"+msg+"\r\n";
+                    String msg = commands.get(1);
+
+                    msg = "$" + msg.length() + "\r\n" + msg + "\r\n";
+
                     out.write(msg.getBytes());
-                    out.flush();
-                }
-                else {
-                    out.write("+ERR\r\n".getBytes());
-                    out.flush();
+
+                } else {
+
+                    out.write("-ERR unknown command\r\n".getBytes());
+
                 }
 
-                i++;
+                out.flush();
             }
-        } catch (IOException e){
+
+        } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
         }
     }
+
 }

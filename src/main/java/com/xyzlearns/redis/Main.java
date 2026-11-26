@@ -1,5 +1,6 @@
 package com.xyzlearns.redis;
 
+import com.xyzlearns.redis.entity.RedisEntry;
 import com.xyzlearns.redis.utils.RespParser;
 
 import java.io.IOException;
@@ -11,9 +12,10 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Main {
-    static Map<String,String> map = new HashMap<>();
+    static Map<String, RedisEntry> map = new ConcurrentHashMap<>();
     public static void main(String[] args){
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     System.out.println("Logs from your program will appear here!");
@@ -54,22 +56,51 @@ public class Main {
 
                 if (command.equals("ping")) {
                     out.write("+PONG\r\n".getBytes());
-                } else if (command.equals("echo")) {
+                }
+                else if (command.equals("echo")) {
                     String msg = commands.get(1);
                     msg = "$" + msg.length() + "\r\n" + msg + "\r\n";
                     out.write(msg.getBytes());
-                } else if(command.equals("set")){
+                }
+                else if(command.equals("set")){
                     String key = commands.get(1);
                     String value = commands.get(2);
-                    map.put(key,value);
-                    out.write("+OK\r\n".getBytes());
-                } else if (command.equals("get")){
+
+                    if(commands.size()==3){
+                        RedisEntry entry = new RedisEntry(value,-1);
+                        map.put(key,entry);
+                        out.write("+OK\r\n".getBytes());
+                    }else {
+                        String expPrefix = commands.get(3).toLowerCase();
+                        int expiry = Integer.parseInt(commands.get(4));
+
+                        if (expPrefix.equals("px")){
+                            RedisEntry entry = new RedisEntry(value,expiry);
+                            map.put(key,entry);
+                            out.write("+OK\r\n".getBytes());
+                        }
+                        else if (expPrefix.equals("ex")){
+                            expiry *=1000;
+                            RedisEntry entry = new RedisEntry(value,expiry);
+                            map.put(key,entry);
+                            out.write("+OK\r\n".getBytes());
+                        }
+                    }
+
+                }
+                else if (command.equals("get")){
                     String key = commands.get(1);
-                    String value = map.get(key);
-                    if (value != null && !value.isEmpty()) {
-                        value = "$" + value.length() + "\r\n" + value + "\r\n";
-                        out.write(value.getBytes());
-                    } else {
+
+                    RedisEntry entry = map.get(key);
+
+                    if (entry != null && !entry.isExpired()) {
+                        String val = "$" + entry.getValue().length() + "\r\n" + entry + "\r\n";
+                        out.write(val.getBytes());
+                    }
+                    else if(entry != null && entry.isExpired()){
+                        map.remove(key);
+                        out.write("$-1\r\n".getBytes());
+                    }else {
                         out.write("$-1\r\n".getBytes());
                     }
                 }

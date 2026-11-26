@@ -1,8 +1,14 @@
+package com.xyzlearns.redis;
+
+import com.xyzlearns.redis.utils.RespParser;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.List;
 
 public class Main {
     public static void main(String[] args){
@@ -28,12 +34,33 @@ public class Main {
 
     private static void handleMultipleClients(Socket clientSocket){
         try(Socket socket = clientSocket) {
-            byte[] buffer = new byte[1024];
-            int read = socket.getInputStream().read(buffer);
-            while (read != -1) {
-                socket.getOutputStream().write("+PONG\r\n".getBytes());
-                socket.getOutputStream().flush();
-                read = socket.getInputStream().read(buffer);
+            InputStream in = socket.getInputStream();
+            OutputStream out = socket.getOutputStream();
+
+            RespParser parser = new RespParser();
+
+            List<String> commands = parser.respParser(in);
+            int i=0;
+            while(i< commands.size()){
+
+                String command = commands.get(i).toLowerCase();
+
+                if(command.equals("ping")){
+                    out.write("+PONG\r\n".getBytes());
+                    out.flush();
+                } else if (command.equals("echo")) {
+                    i++;
+                    String msg = commands.get(i);
+                    msg = "+"+msg+"\r\n";
+                    out.write(msg.getBytes());
+                    out.flush();
+                }
+                else {
+                    out.write("+ERR\r\n".getBytes());
+                    out.flush();
+                }
+                
+                i++;
             }
         } catch (IOException e){
             System.out.println("IOException: " + e.getMessage());

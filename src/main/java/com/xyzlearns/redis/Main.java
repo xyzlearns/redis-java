@@ -51,7 +51,8 @@ public class Main {
                 } else if (command.equals("echo")) {
                     i++;
                     String msg = commands.get(i);
-                    msg = "+"+msg+"\r\n";
+
+                    msg = "$"+msg.length()+"\r\n"+msg+"\r\n";
                     out.write(msg.getBytes());
                     out.flush();
                 }
@@ -59,7 +60,7 @@ public class Main {
                     out.write("+ERR\r\n".getBytes());
                     out.flush();
                 }
-                
+
                 i++;
             }
         } catch (IOException e){

@@ -2,6 +2,7 @@
 package com.xyzlearns.redis;
 
 import com.xyzlearns.redis.commands.CommandHandler;
+import com.xyzlearns.redis.config.RedisConfig;
 import com.xyzlearns.redis.storage.RedisStore;
 import com.xyzlearns.redis.utils.RespParser;
 
@@ -21,7 +22,8 @@ public class Main {
         int port = 6379;
 
         RedisStore store = new RedisStore();
-        CommandHandler commandHandler = new CommandHandler(store);
+        RedisConfig redisConfig = new RedisConfig();
+        CommandHandler commandHandler = new CommandHandler(store,redisConfig);
 
         try (ServerSocket serverSocket = new ServerSocket()) {
 

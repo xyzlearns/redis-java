@@ -25,6 +25,8 @@ public class Main {
         RedisConfig redisConfig = new RedisConfig();
         CommandHandler commandHandler = new CommandHandler(store,redisConfig);
 
+        loadArgs(args,redisConfig);
+
         try (ServerSocket serverSocket = new ServerSocket()) {
 
             serverSocket.setReuseAddress(true);
@@ -62,6 +64,24 @@ public class Main {
 
         } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
+        }
+    }
+
+    private static void loadArgs(String[] args,RedisConfig redisConfig){
+        for (int i=0;i< args.length-1;i+=2){
+            if (!args[i].startsWith("--")) {
+                throw new IllegalArgumentException("Invalid flag: " + args[i]);
+            }
+
+            String key = args[i];
+            key = key.substring(2);
+
+            if (!redisConfig.hasConfig(key)) {
+                throw new IllegalArgumentException("Unknown configuration: " + key);
+            }
+
+            String value = args[i+1];
+            redisConfig.setConfig(key,value);
         }
     }
 }

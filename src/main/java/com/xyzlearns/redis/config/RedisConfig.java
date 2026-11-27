@@ -22,4 +22,8 @@ public class RedisConfig {
     public void setConfig(String key,String value) {
         config.put(key,value);
     }
+
+    public boolean hasConfig(String key) {
+        return config.containsKey(key);
+    }
 }

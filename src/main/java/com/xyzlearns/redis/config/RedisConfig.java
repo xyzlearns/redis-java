@@ -1,5 +1,6 @@
 package com.xyzlearns.redis.config;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,5 +26,13 @@ public class RedisConfig {
 
     public boolean hasConfig(String key) {
         return config.containsKey(key);
+    }
+
+    public void reload(){
+        if (config.get("appendonly").equalsIgnoreCase("yes")){
+            String currentDirectory = config.get("dir");
+            String appendirname = config.get("appendirname");
+            Path dir = Path.of(currentDirectory).resolve(appendirname);
+        }
     }
 }

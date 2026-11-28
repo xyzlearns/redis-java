@@ -1,5 +1,7 @@
 package com.xyzlearns.redis.config;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,11 +30,12 @@ public class RedisConfig {
         return config.containsKey(key);
     }
 
-    public void reload(){
+    public void reload() throws IOException {
         if (config.get("appendonly").equalsIgnoreCase("yes")){
             String currentDirectory = config.get("dir");
             String appendirname = config.get("appendirname");
             Path dir = Path.of(currentDirectory).resolve(appendirname);
+            Files.createDirectories(dir);
         }
     }
 }

@@ -82,11 +82,9 @@ public class Main {
 
             String value = args[i+1];
             redisConfig.setConfig(key,value);
-            try {
-                redisConfig.reload();
-            } catch (IOException e) {
-                System.out.println(e.getMessage());
-            }
+
+            redisConfig.reload();
+
 
         }
     }

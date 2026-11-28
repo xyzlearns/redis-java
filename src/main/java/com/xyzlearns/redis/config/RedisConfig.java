@@ -30,12 +30,28 @@ public class RedisConfig {
         return config.containsKey(key);
     }
 
-    public void reload() throws IOException {
-        if (config.get("appendonly").equalsIgnoreCase("yes")){
-            String currentDirectory = config.get("dir");
-            String appendirname = config.get("appendirname");
-            Path dir = Path.of(currentDirectory).resolve(appendirname);
-            Files.createDirectories(dir);
+    public void reload() {
+        try {
+
+            if (config.get("appendonly").equalsIgnoreCase("yes")){
+
+                String currentDirectory = config.get("dir");
+
+
+
+                String appenddirname = config.get("appenddirname");
+                Path dir = Path.of(currentDirectory).resolve(appenddirname);
+
+                try {
+                    Files.createDirectories(dir);
+                } catch (Exception e) {
+                    System.out.println(e.getMessage());
+                }
+
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
+
     }
 }

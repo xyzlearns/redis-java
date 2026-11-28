@@ -19,6 +19,10 @@ public class CommandHandler {
     }
 
     public void execute(List<String> commands, OutputStream out) throws IOException{
+        execute(commands,out,true);
+    }
+
+    public void execute(List<String> commands, OutputStream out,boolean persist) throws IOException{
         if (commands == null || commands.isEmpty()) {
             return;
         }
@@ -72,7 +76,10 @@ public class CommandHandler {
 
                 store.set(key, value, expiryTime);
                 AofManager manager = new AofManager(redisConfig);
-                manager.aofWrite(commands);
+
+                if (persist) {
+                    manager.aofWrite(commands);
+                }
 
                 out.write("+OK\r\n".getBytes());
             }
@@ -99,7 +106,7 @@ public class CommandHandler {
                 }
 
                 config(commands.get(2), out);
-                
+
             }
             default -> out.write(("-ERR unknown command '" +
                     commands.get(0) + "'\r\n").getBytes());

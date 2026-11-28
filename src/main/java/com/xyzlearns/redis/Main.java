@@ -1,6 +1,7 @@
 
 package com.xyzlearns.redis;
 
+import com.xyzlearns.redis.aof.AofManager;
 import com.xyzlearns.redis.commands.CommandHandler;
 import com.xyzlearns.redis.config.RedisConfig;
 import com.xyzlearns.redis.storage.RedisStore;
@@ -8,6 +9,7 @@ import com.xyzlearns.redis.utils.RespParser;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -26,6 +28,14 @@ public class Main {
         CommandHandler commandHandler = new CommandHandler(store,redisConfig);
 
         loadArgs(args,redisConfig);
+
+        try {
+            AofManager aofManager = new AofManager(redisConfig);
+            aofManager.executeCommands(commandHandler);
+        } catch (IOException e) {
+            System.out.println("AOF Recovery Error: " + e.getMessage());
+            return;
+        }
 
         try (ServerSocket serverSocket = new ServerSocket()) {
 

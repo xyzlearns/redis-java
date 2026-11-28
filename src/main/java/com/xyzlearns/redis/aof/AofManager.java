@@ -1,9 +1,13 @@
 package com.xyzlearns.redis.aof;
 
+import com.xyzlearns.redis.commands.CommandHandler;
 import com.xyzlearns.redis.config.RedisConfig;
+import com.xyzlearns.redis.utils.RespParser;
 import com.xyzlearns.redis.utils.RespSerializer;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
@@ -73,4 +77,44 @@ public class AofManager {
 
         throw new IOException("No incremental AOF file found");
     }
+
+    public void executeCommands(CommandHandler commandHandler) throws IOException {
+
+            if (!"yes".equalsIgnoreCase(redisConfig.getConfig("appendonly"))) {
+                return;
+            }
+
+            String appenddirname = redisConfig.getConfig("appenddirname");
+            String appendfilename = redisConfig.getConfig("appendfilename");
+            String currentDir = redisConfig.getConfig("dir");
+
+            Path aofDirectory = Path.of(currentDir).resolve(appenddirname);
+
+            String manifestFilename = appendfilename + ".manifest";
+
+            Path manifestDir = aofDirectory.resolve(manifestFilename);
+
+            if (Files.notExists(manifestDir)) {
+                return;
+            }
+
+            String activeAofFile = activeAofFile(manifestDir);
+
+            Path aofFile = aofDirectory.resolve(activeAofFile);
+
+            if (Files.notExists(aofFile)) {
+                return;
+            }
+
+            RespParser parser = new RespParser();
+
+            try (InputStream input = Files.newInputStream(aofFile)){
+                List<String> command;
+
+                while ((command = parser.respParser(input)) != null){
+                    commandHandler.execute(command,OutputStream.nullOutputStream(),false);
+                }
+            }
+    }
+
 }

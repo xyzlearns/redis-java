@@ -13,7 +13,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.List;
 
 public class AofManager {
-    private RedisConfig redisConfig;
+    private final RedisConfig redisConfig;
 
     public AofManager(RedisConfig redisConfig){
         this.redisConfig = redisConfig;
@@ -28,7 +28,7 @@ public class AofManager {
 
         String appenddirname = redisConfig.getConfig("appenddirname");
         String appendfilename = redisConfig.getConfig("appendfilename");
-        String currentDir = redisConfig.getConfig("currentDir");
+        String currentDir = redisConfig.getConfig("dir");
 
         Path aofDirectory = Path.of(currentDir).resolve(appenddirname);
 

@@ -82,10 +82,7 @@ public class Main {
 
             String value = args[i+1];
             redisConfig.setConfig(key,value);
-
-            redisConfig.reload();
-
-
         }
+        redisConfig.reload();
     }
 }

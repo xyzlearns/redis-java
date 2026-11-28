@@ -51,7 +51,7 @@ public class RedisConfig {
 
                 if (Files.notExists(aofManifestFile)) {
                     Files.createFile(aofManifestFile);
-                    Files.writeString(aofManifestFile,"file"+appendfilename+".1.incr.aof"+" seq 1 type i\n", StandardOpenOption.CREATE,StandardOpenOption.APPEND);
+                    Files.writeString(aofManifestFile,"file "+appendfilename+".1.incr.aof seq 1 type i\n");
                 }
             }
 

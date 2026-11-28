@@ -32,26 +32,24 @@ public class RedisConfig {
 
     public void reload() {
         try {
-
-            if (config.get("appendonly").equalsIgnoreCase("yes")){
+            if ("yes".equalsIgnoreCase(config.get("appendonly"))) {
 
                 String currentDirectory = config.get("dir");
-
-
-
                 String appenddirname = config.get("appenddirname");
+                String appendfilename = config.get("appendfilename");
+
                 Path dir = Path.of(currentDirectory).resolve(appenddirname);
+                Files.createDirectories(dir);
 
-                try {
-                    Files.createDirectories(dir);
-                } catch (Exception e) {
-                    System.out.println(e.getMessage());
+                Path file = dir.resolve(appendfilename + ".1.incr.aof");
+
+                if (Files.notExists(file)) {
+                    Files.createFile(file);
                 }
-
             }
-        } catch (Exception e) {
+
+        } catch (IOException e) {
             System.out.println(e.getMessage());
         }
-
     }
 }

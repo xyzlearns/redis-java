@@ -3,6 +3,7 @@ package com.xyzlearns.redis.config;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,10 +42,16 @@ public class RedisConfig {
                 Path dir = Path.of(currentDirectory).resolve(appenddirname);
                 Files.createDirectories(dir);
 
-                Path file = dir.resolve(appendfilename + ".1.incr.aof");
+                Path aofFile = dir.resolve(appendfilename + ".1.incr.aof");
+                Path aofManifestFile = dir.resolve(appendfilename+".manifest");
 
-                if (Files.notExists(file)) {
-                    Files.createFile(file);
+                if (Files.notExists(aofFile)) {
+                    Files.createFile(aofFile);
+                }
+
+                if (Files.notExists(aofManifestFile)) {
+                    Files.createFile(aofManifestFile);
+                    Files.writeString(aofManifestFile,"file"+appendfilename+".1.incr.aof"+" seq 1 type i\n", StandardOpenOption.CREATE,StandardOpenOption.APPEND);
                 }
             }
 

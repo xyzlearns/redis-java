@@ -1,5 +1,6 @@
 package com.xyzlearns.redis.commands;
 
+import com.xyzlearns.redis.aof.AofManager;
 import com.xyzlearns.redis.config.RedisConfig;
 import com.xyzlearns.redis.entity.RedisEntry;
 import com.xyzlearns.redis.storage.RedisStore;
@@ -13,7 +14,6 @@ public class CommandHandler {
     private final RedisConfig redisConfig;
 
     public CommandHandler(RedisStore redisStore,RedisConfig redisConfig){
-
         this.store = redisStore;
         this.redisConfig = redisConfig;
     }
@@ -71,6 +71,8 @@ public class CommandHandler {
                 }
 
                 store.set(key, value, expiryTime);
+                AofManager manager = new AofManager(redisConfig);
+                manager.aofWrite(commands);
 
                 out.write("+OK\r\n".getBytes());
             }
@@ -89,7 +91,6 @@ public class CommandHandler {
                     writeBulkString(entry.getValue(), out);
                 }
             }
-
             case "config" -> {
                 if (commands.size() != 3 ||
                         !commands.get(1).equalsIgnoreCase("get")) {
@@ -130,6 +131,5 @@ public class CommandHandler {
         writeBulkString(parameter, out);
         writeBulkString(value, out);
     }
-
 }
 

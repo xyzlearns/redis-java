@@ -1,87 +1,93 @@
+
 package com.xyzlearns.redis.utils;
 
+import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 public class RespParser {
 
-    public RespParser(){
+    public List<String> respParser(InputStream in) throws IOException {
 
-    }
+        // Read the first byte
+        int firstByte = in.read();
 
-    //*2 \r\n $4 \r\n ECHO \r\n $3 \r\n hey \r\n
-    //01 2345 67 891011
+        // End of stream: no more commands
+        if (firstByte == -1) {
+            return null;
+        }
 
+        if (firstByte != '*') {
+            throw new IOException("Expected RESP array");
+        }
 
-    public List<String> respParser(InputStream in) {
+        // Read array length
+        int arrayLength = Integer.parseInt(readLine(in));
 
         List<String> command = new ArrayList<>();
 
-        try {
-            byte[] buffer = new byte[1024];
+        // Read each bulk string
+        for (int i = 0; i < arrayLength; i++) {
 
-            int read = in.read(buffer);
+            int marker = in.read();
 
-            if (read == -1) {
-                return null;
+            if (marker != '$') {
+                throw new IOException("Expected bulk string");
             }
 
-            String message = new String(buffer, 0, read);
+            // Read bulk string length
+            int wordLength = Integer.parseInt(readLine(in));
 
-            int i = 0;
-
-            // Read array length
-            if (message.charAt(i) == '*') {
-                i++;
-
-                int end = message.indexOf("\r\n", i);
-
-                int arrayLength = Integer.parseInt(
-                        message.substring(i, end)
-                );
-
-                i = end + 2;
-
-                // Read array elements
-                for (int j = 0; j < arrayLength; j++) {
-
-                    if (message.charAt(i) != '$') {
-                        throw new IllegalArgumentException(
-                                "Expected bulk string"
-                        );
-                    }
-
-                    i++;
-
-                    // Read bulk string length
-                    end = message.indexOf("\r\n", i);
-
-                    int wordLength = Integer.parseInt(
-                            message.substring(i, end)
-                    );
-
-                    i = end + 2;
-
-                    // Extract actual string
-                    String element = message.substring(
-                            i, i + wordLength
-                    );
-
-                    command.add(element);
-
-                    // Skip payload and trailing CRLF
-                    i += wordLength + 2;
-                }
+            if (wordLength < 0) {
+                throw new IOException("Invalid command argument length");
             }
 
-            return command;
+            // Read exactly wordLength bytes
+            byte[] data = in.readNBytes(wordLength);
 
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-            return command;
+            if (data.length != wordLength) {
+                throw new EOFException("Incomplete bulk string");
+            }
+
+            String element = new String(data, StandardCharsets.UTF_8);
+
+            command.add(element);
+
+            // Consume trailing CRLF
+            if (in.read() != '\r' || in.read() != '\n') {
+                throw new IOException("Expected CRLF after bulk string");
+            }
         }
+
+        return command;
     }
 
+    private String readLine(InputStream in) throws IOException {
+
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+        while (true) {
+
+            int b = in.read();
+
+            if (b == -1) {
+                throw new EOFException("Unexpected EOF while reading RESP line");
+            }
+
+            if (b == '\r') {
+
+                if (in.read() != '\n') {
+                    throw new IOException("Expected LF after CR");
+                }
+
+                return buffer.toString(StandardCharsets.UTF_8);
+            }
+
+            buffer.write(b);
+        }
+    }
 }
